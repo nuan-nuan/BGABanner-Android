@@ -1,70 +1,73 @@
 package cn.bingoogolapple.bgabanner.demo.ui.activity;
 
-import android.net.Uri;
+import android.app.Activity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.Toast;
 
-import com.facebook.drawee.view.SimpleDraweeView;
-import com.google.gson.Gson;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.TextHttpResponseHandler;
-
-import org.apache.http.Header;
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import cn.bingoogolapple.bgabanner.BGABanner;
+import cn.bingoogolapple.bgabanner.demo.App;
 import cn.bingoogolapple.bgabanner.demo.R;
+import cn.bingoogolapple.bgabanner.demo.engine.Engine;
 import cn.bingoogolapple.bgabanner.demo.model.BannerModel;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity {
-    private AsyncHttpClient mAsyncHttpClient;
+public class MainActivity extends Activity {
     private BGABanner mDefaultBanner;
-    private List<View> mDefaultViews;
+    private List<ImageView> mDefaultViews;
 
     private BGABanner mCubeBanner;
-    private List<View> mCubeViews;
+    private List<ImageView> mCubeViews;
 
     private BGABanner mAccordionBanner;
-    private List<View> mAccordionViews;
+    private List<ImageView> mAccordionViews;
 
     private BGABanner mFlipBanner;
-    private List<View> mFlipViews;
+    private List<ImageView> mFlipViews;
 
     private BGABanner mRotateBanner;
-    private List<View> mRotateViews;
+    private List<ImageView> mRotateViews;
 
     private BGABanner mAlphaBanner;
-    private List<View> mAlphaViews;
+    private List<ImageView> mAlphaViews;
 
     private BGABanner mZoomFadeBanner;
-    private List<View> mZoomFadeViews;
+    private List<ImageView> mZoomFadeViews;
 
     private BGABanner mFadeBanner;
-    private List<View> mFadeViews;
+    private List<ImageView> mFadeViews;
 
     private BGABanner mZoomCenterBanner;
-    private List<View> mZoomCenterViews;
+    private List<ImageView> mZoomCenterViews;
 
     private BGABanner mZoomBanner;
-    private List<View> mZoomViews;
+    private List<ImageView> mZoomViews;
 
     private BGABanner mStackBanner;
-    private List<View> mStackViews;
+    private List<ImageView> mStackViews;
 
     private BGABanner mZoomStackBanner;
-    private List<View> mZoomStackViews;
+    private List<ImageView> mZoomStackViews;
 
     private BGABanner mDepthBanner;
-    private List<View> mDepthViews;
+    private List<ImageView> mDepthViews;
+
+    private Engine mEngine;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mAsyncHttpClient = new AsyncHttpClient();
+
+        mEngine = App.getInstance().getEngine();
 
         initDefault();
         initCube();
@@ -85,20 +88,30 @@ public class MainActivity extends AppCompatActivity {
         mDefaultBanner = (BGABanner) findViewById(R.id.banner_main_default);
         mDefaultViews = getViews(5);
         mDefaultBanner.setViews(mDefaultViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/5item.json", new TextHttpResponseHandler() {
+
+        mEngine.fiveItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                ImageView imageView;
+                for (int i = 0; i < mDefaultViews.size(); i++) {
+                    imageView = mDefaultViews.get(i);
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(imageView);
+
+                    // 为每一页添加点击事件
+                    final int finalPosition = i;
+                    imageView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Toast.makeText(App.getInstance(), "点击了第" + (finalPosition + 1) + "页", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+                mDefaultBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mDefaultViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mDefaultViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mDefaultBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -107,21 +120,20 @@ public class MainActivity extends AppCompatActivity {
         mCubeBanner = (BGABanner) findViewById(R.id.banner_main_cube);
         mCubeViews = getViews(6);
         mCubeBanner.setViews(mCubeViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/6item.json", new TextHttpResponseHandler() {
-            @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-            }
 
+        mEngine.sixItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
                 for (int i = 0; i < mCubeViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mCubeViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mCubeViews.get(i));
                 }
                 // 也可以不设置tips
 //                mCubeBanner.setTips(bannerModel.tips);
+            }
+
+            @Override
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -130,20 +142,19 @@ public class MainActivity extends AppCompatActivity {
         mAccordionBanner = (BGABanner) findViewById(R.id.banner_main_accordion);
         mAccordionViews = getViews(4);
         mAccordionBanner.setViews(mAccordionViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/4item.json", new TextHttpResponseHandler() {
+
+        mEngine.fourItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                for (int i = 0; i < mAccordionViews.size(); i++) {
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mAccordionViews.get(i));
+                }
+                mAccordionBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mAccordionViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mAccordionViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mAccordionBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -152,20 +163,19 @@ public class MainActivity extends AppCompatActivity {
         mFlipBanner = (BGABanner) findViewById(R.id.banner_main_flip);
         mFlipViews = getViews(3);
         mFlipBanner.setViews(mFlipViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/3item.json", new TextHttpResponseHandler() {
+
+        mEngine.threeItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                for (int i = 0; i < mFlipViews.size(); i++) {
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mFlipViews.get(i));
+                }
+                mFlipBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mFlipViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mFlipViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mFlipBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -174,20 +184,19 @@ public class MainActivity extends AppCompatActivity {
         mRotateBanner = (BGABanner) findViewById(R.id.banner_main_rotate);
         mRotateViews = getViews(6);
         mRotateBanner.setViews(mRotateViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/6item.json", new TextHttpResponseHandler() {
+
+        mEngine.sixItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                for (int i = 0; i < mRotateViews.size(); i++) {
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mRotateViews.get(i));
+                }
+                mRotateBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mRotateViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mRotateViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mRotateBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -196,20 +205,19 @@ public class MainActivity extends AppCompatActivity {
         mAlphaBanner = (BGABanner) findViewById(R.id.banner_main_alpha);
         mAlphaViews = getViews(5);
         mAlphaBanner.setViews(mAlphaViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/5item.json", new TextHttpResponseHandler() {
+
+        mEngine.fiveItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                for (int i = 0; i < mAlphaViews.size(); i++) {
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mAlphaViews.get(i));
+                }
+                mAlphaBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mAlphaViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mAlphaViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mAlphaBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -218,20 +226,19 @@ public class MainActivity extends AppCompatActivity {
         mZoomFadeBanner = (BGABanner) findViewById(R.id.banner_main_zoomFade);
         mZoomFadeViews = getViews(4);
         mZoomFadeBanner.setViews(mZoomFadeViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/4item.json", new TextHttpResponseHandler() {
+
+        mEngine.fourItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                for (int i = 0; i < mZoomFadeViews.size(); i++) {
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mZoomFadeViews.get(i));
+                }
+                mZoomFadeBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mZoomFadeViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mZoomFadeViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mZoomFadeBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -240,20 +247,19 @@ public class MainActivity extends AppCompatActivity {
         mFadeBanner = (BGABanner) findViewById(R.id.banner_main_fade);
         mFadeViews = getViews(3);
         mFadeBanner.setViews(mFadeViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/3item.json", new TextHttpResponseHandler() {
+
+        mEngine.threeItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                for (int i = 0; i < mFadeViews.size(); i++) {
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mFadeViews.get(i));
+                }
+                mFadeBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mFadeViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mFadeViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mFadeBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -262,20 +268,19 @@ public class MainActivity extends AppCompatActivity {
         mZoomCenterBanner = (BGABanner) findViewById(R.id.banner_main_zoomCenter);
         mZoomCenterViews = getViews(6);
         mZoomCenterBanner.setViews(mZoomCenterViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/6item.json", new TextHttpResponseHandler() {
+
+        mEngine.sixItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                for (int i = 0; i < mZoomCenterViews.size(); i++) {
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mZoomCenterViews.get(i));
+                }
+                mZoomCenterBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mZoomCenterViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mZoomCenterViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mZoomCenterBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -284,20 +289,19 @@ public class MainActivity extends AppCompatActivity {
         mZoomBanner = (BGABanner) findViewById(R.id.banner_main_zoom);
         mZoomViews = getViews(5);
         mZoomBanner.setViews(mZoomViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/5item.json", new TextHttpResponseHandler() {
+
+        mEngine.fiveItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                for (int i = 0; i < mZoomViews.size(); i++) {
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mZoomViews.get(i));
+                }
+                mZoomBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mZoomViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mZoomViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mZoomBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -306,20 +310,19 @@ public class MainActivity extends AppCompatActivity {
         mStackBanner = (BGABanner) findViewById(R.id.banner_main_stack);
         mStackViews = getViews(4);
         mStackBanner.setViews(mStackViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/4item.json", new TextHttpResponseHandler() {
+
+        mEngine.fourItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                for (int i = 0; i < mStackViews.size(); i++) {
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mStackViews.get(i));
+                }
+                mStackBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mStackViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mStackViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mStackBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -328,20 +331,19 @@ public class MainActivity extends AppCompatActivity {
         mZoomStackBanner = (BGABanner) findViewById(R.id.banner_main_zoomStack);
         mZoomStackViews = getViews(3);
         mZoomStackBanner.setViews(mZoomStackViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/3item.json", new TextHttpResponseHandler() {
+
+        mEngine.threeItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                for (int i = 0; i < mZoomStackViews.size(); i++) {
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mZoomStackViews.get(i));
+                }
+                mZoomStackBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mZoomStackViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mZoomStackViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mZoomStackBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
@@ -350,28 +352,27 @@ public class MainActivity extends AppCompatActivity {
         mDepthBanner = (BGABanner) findViewById(R.id.banner_main_depth);
         mDepthViews = getViews(6);
         mDepthBanner.setViews(mDepthViews);
-        mAsyncHttpClient.get("https://raw.githubusercontent.com/bingoogolapple/BGABanner-Android/server/api/6item.json", new TextHttpResponseHandler() {
+
+        mEngine.sixItem().enqueue(new Callback<BannerModel>() {
             @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+            public void onResponse(Call<BannerModel> call, Response<BannerModel> response) {
+                BannerModel bannerModel = response.body();
+                for (int i = 0; i < mDepthViews.size(); i++) {
+                    Glide.with(MainActivity.this).load(bannerModel.imgs.get(i)).placeholder(R.drawable.holder).error(R.drawable.holder).into(mDepthViews.get(i));
+                }
+                mDepthBanner.setTips(bannerModel.tips);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                BannerModel bannerModel = new Gson().fromJson(responseString, BannerModel.class);
-                SimpleDraweeView simpleDraweeView;
-                for (int i = 0; i < mDepthViews.size(); i++) {
-                    simpleDraweeView = (SimpleDraweeView) mDepthViews.get(i);
-                    simpleDraweeView.setImageURI(Uri.parse(bannerModel.imgs.get(i)));
-                }
-                mDepthBanner.setTips(bannerModel.tips);
+            public void onFailure(Call<BannerModel> call, Throwable t) {
             }
         });
     }
 
-    private List<View> getViews(int count) {
-        List<View> views = new ArrayList<>();
+    private List<ImageView> getViews(int count) {
+        List<ImageView> views = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            views.add(getLayoutInflater().inflate(R.layout.view_image, null));
+            views.add((ImageView) getLayoutInflater().inflate(R.layout.view_image, null));
         }
         return views;
     }
